@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Automated Data Analyst</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css" />
+<link rel="stylesheet" href="css/dashboard.css" />
+<script src="assets/plotly.min.js"></script>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ============================ SIDEBAR ============================ -->
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-mark"></span>
+      <div class="brand-text">
+        <span class="brand-title">Automated Data Analyst</span>
+        <span class="brand-sub">v1.0 · localhost</span>
+      </div>
+    </div>
+
+    <nav class="screens" id="nav-screens">
+      <div class="nav-group-label">Pipeline</div>
+      <button class="nav-item active" data-screen="upload"><span class="nav-dot"></span>Home / Upload</button>
+      <button class="nav-item" data-screen="profile"><span class="nav-dot"></span>Dataset Profile</button>
+      <button class="nav-item" data-screen="cleaning"><span class="nav-dot"></span>Data Cleaning</button>
+      <button class="nav-item" data-screen="quality"><span class="nav-dot"></span>Data Quality</button>
+      <button class="nav-item" data-screen="preview"><span class="nav-dot"></span>Data Preview</button>
+      <button class="nav-item" data-screen="database"><span class="nav-dot"></span>PostgreSQL</button>
+
+      <div class="nav-group-label">Analyze</div>
+      <button class="nav-item" data-screen="sql"><span class="nav-dot"></span>SQL Workspace</button>
+      <button class="nav-item" data-screen="eda"><span class="nav-dot"></span>EDA</button>
+      <button class="nav-item" data-screen="insights"><span class="nav-dot"></span>Insights</button>
+      <button class="nav-item" data-screen="dashboard"><span class="nav-dot"></span>Dashboard</button>
+      <button class="nav-item" data-screen="segmentation"><span class="nav-dot"></span>Customer Segmentation</button>
+
+      <div class="nav-group-label">Output</div>
+      <button class="nav-item" data-screen="ai"><span class="nav-dot"></span>Ask Your Data</button>
+      <button class="nav-item" data-screen="reports"><span class="nav-dot"></span>Reports</button>
+      <button class="nav-item" data-screen="settings"><span class="nav-dot"></span>Settings</button>
+    </nav>
+
+    <div class="sidebar-footer">
+      dataset: <span id="sidebar-dataset-id">none</span>
+    </div>
+  </aside>
+
+  <!-- ============================ TOPBAR ============================= -->
+  <header class="topbar">
+    <div class="topbar-title" id="topbar-title">Home / Upload</div>
+    <div class="topbar-meta">
+      <span><span class="status-dot off" id="db-status-dot"></span><span id="db-status-text">Database not configured</span></span>
+      <span><span class="status-dot off" id="ai-status-dot"></span><span id="ai-status-text">AI disabled</span></span>
+    </div>
+  </header>
+
+  <!-- ============================ MAIN =============================== -->
+  <main class="content">
+
+    <!-- ---------- HOME / UPLOAD ---------- -->
+    <section class="screen active" id="screen-upload">
+      <div class="screen-header">
+        <h1>Upload a dataset</h1>
+        <p>Upload a CSV or XLSX sales, retail or customer-shopping dataset. The application adapts to whatever columns your file contains — nothing is hard-coded to one schema.</p>
+      </div>
+
+      <div class="card">
+        <div id="upload-drop" class="upload-drop">
+          <strong>Drop a .csv or .xlsx file here</strong>
+          <span>or click to browse — up to the configured upload size limit</span>
+          <input type="file" id="file-input" accept=".csv,.xlsx,.xls" hidden />
+        </div>
+        <div id="upload-status" class="small muted" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="card" id="recent-upload-card" style="display:none;">
+        <div class="card-title">Current dataset</div>
+        <div class="grid grid-4" id="upload-summary"></div>
+        <div class="btn-row">
+          
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Sample datasets</div>
+        <p class="small muted">No dataset handy? Use one of the bundled samples in <code class="inline-code">sample_datasets/</code> to try the full workflow: <code class="inline-code">sales_sample.csv</code>, <code class="inline-code">customer_shopping_sample.csv</code>, <code class="inline-code">ecommerce_sample.xlsx</code>.</p>
+      </div>
+    </section>
+
+    <!-- ---------- DATASET PROFILE ---------- -->
+    <section class="screen" id="screen-profile">
+      <div class="screen-header">
+        <h1>Dataset profile</h1>
+        <p>Schema, detected types and roles, missing values, duplicates and statistics — computed automatically from the uploaded file.</p>
+      </div>
+      <div id="profile-empty" class="card empty-state">
+        <strong>No dataset profiled yet</strong>
+        Upload a dataset first, then return to this screen.
+      </div>
+      <div id="profile-content" style="display:none;">
+        <div class="grid grid-4" id="profile-summary-cards"></div>
+        <div class="card">
+          <div class="card-title">Columns</div>
+          <div class="table-scroll">
+            <table class="data-table" id="profile-columns-table">
+              <thead><tr>
+                <th>Original name</th><th>Standardized</th><th>Type</th><th>Role</th>
+                <th>Missing</th><th>Unique</th><th>Sample values</th>
+              </tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="btn-row">
+          
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- DATA CLEANING ---------- -->
+    <section class="screen" id="screen-cleaning">
+      <div class="screen-header">
+        <h1>Data quality center</h1>
+        <p>Detect → Explain → Recommend → Preview → Apply. Outliers and anomalies are marked for review, never silently deleted.</p>
+      </div>
+      <div id="cleaning-empty" class="card empty-state">
+        <strong>Profile a dataset first</strong>
+        The cleaning engine needs a profiled dataset to build its recommendations.
+      </div>
+      <div id="cleaning-content" style="display:none;">
+        <div class="card">
+          <div class="card-title">Cleaning options</div>
+          <div class="grid grid-2">
+            <label class="small"><input type="checkbox" id="opt-missing" checked /> Handle missing values</label>
+            <label class="small"><input type="checkbox" id="opt-duplicates" checked /> Remove exact duplicates</label>
+            <label class="small"><input type="checkbox" id="opt-outliers" checked /> Flag outliers</label>
+            <label class="small"><input type="checkbox" id="opt-anomalies" checked /> Run anomaly detection</label>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" id="btn-preview-cleaning">Preview cleaning plan</button><p id="cleaning-status" role="status" class="small muted"></p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <section class="screen" id="screen-quality">
+      <div class="screen-header"><h1>Data Quality</h1><p>Review the selected plan before applying it to the original dataset.</p></div>
+      <p id="quality-empty" class="small muted">Use Preview cleaning plan in Data Cleaning to generate recommendations, or continue with Next.</p>
+        <div class="card" id="cleaning-preview-card" style="display:none;">
+          <div class="card-title">Data quality</div>
+          <div class="grid grid-4" id="quality-summary-cards"></div>
+          <div id="cleaning-plan"></div>
+          <div class="btn-row">
+            <button class="btn btn-accent" id="btn-apply-cleaning">Apply cleaning</button>
+          </div>
+        </div>
+
+    </section>
+    <!-- ---------- DATA PREVIEW ---------- -->
+    <section class="screen" id="screen-preview">
+      <div class="screen-header">
+        <h1>Original vs cleaned data</h1>
+        <p>A row-level look at the dataset before and after the cleaning engine ran.</p>
+      </div>
+        <div class="card" id="cleaning-result-card" style="display:none;">
+          <div class="card-title">Before vs after</div>
+          <table class="data-table" id="before-after-table">
+            <thead><tr><th>Metric</th><th>Before</th><th>After</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="card" id="audit-log-card" style="display:none;">
+          <div class="card-title">Cleaning audit log</div>
+          <div id="audit-log-list"></div>
+        </div>
+      
+      <div class="card"><div class="card-title">Original upload (first 100 rows)</div><div class="table-scroll"><table class="data-table" id="original-preview-table"><thead></thead><tbody></tbody></table></div></div>
+      <div class="card">
+        <div class="card-title">Cleaned data (first 100 rows)</div>
+        <div class="table-scroll"><table class="data-table" id="preview-table"><thead></thead><tbody></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- ---------- POSTGRESQL ---------- -->
+    <section class="screen" id="screen-database">
+      <div class="screen-header">
+        <h1>PostgreSQL setup</h1>
+        <p>Configure the connection once. Your password is handled entirely by the local backend and never stored in the browser beyond this form submission.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Connection details</div>
+        <div class="grid grid-2">
+          <div class="field"><label class="field-label">Host</label><input type="text" id="db-host" value="localhost"/></div>
+          <div class="field"><label class="field-label">Port</label><input type="number" id="db-port" value="5432"/></div>
+          <div class="field"><label class="field-label">Username</label><input type="text" id="db-user" value="postgres"/></div>
+          <div class="field"><label class="field-label">Password</label><input type="password" id="db-password" placeholder="entered locally, never exposed"/></div>
+        </div>
+        <div class="field"><label class="field-label">Database name</label><input type="text" id="db-name" placeholder="automated_data_analyst"/></div>
+        <div class="btn-row">
+          <button class="btn" id="btn-test-connection">Test connection</button>
+          <button class="btn btn-primary" id="btn-setup-database">Create / Connect</button>
+        </div>
+        <div id="db-setup-status" class="small" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Load cleaned data into PostgreSQL</div>
+        <div class="field"><label class="field-label">Table name (optional)</label><input type="text" id="load-table-name" placeholder="auto-generated from filename"/></div>
+        <div class="btn-row"><button class="btn btn-accent" id="btn-load-db">Load into PostgreSQL</button></div>
+        <div id="load-db-status" class="small" style="margin-top:12px;"></div>
+      </div>
+    </section>
+
+    <!-- ---------- SQL WORKSPACE ---------- -->
+    <section class="screen" id="screen-sql">
+      <div class="screen-header">
+        <h1>SQL workspace</h1>
+        <p>Run SELECT queries directly against PostgreSQL. Destructive statements require explicit confirmation.</p>
+      </div>
+      <div class="card">
+        <div id="sql-schema" class="small"></div><button class="btn" onclick="loadSqlMetadata()">Refresh schema</button><p class="small muted">Display limits bound returned rows, not execution cost.</p><label>Display rows <input id="sql-limit" type="number" value="500" min="1" max="5000"></label><label>Timeout (ms) <input id="sql-timeout" type="number" value="15000" min="100" max="60000"></label>
+        <textarea id="sql-input" rows="6" placeholder="SELECT * FROM your_table LIMIT 50;"></textarea>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btn-run-sql">Run query</button>
+        </div>
+        <div id="sql-status" class="small" style="margin-top:10px;"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Results</div>
+        <div class="table-scroll"><table class="data-table" id="sql-results-table"><thead></thead><tbody></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- ---------- EDA ---------- -->
+    <section class="screen" id="screen-eda">
+      <div class="screen-header">
+        <h1>Exploratory data analysis</h1>
+        <p>Distributions, categorical frequencies and correlations computed across the cleaned dataset.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Numeric distributions</div>
+        <div class="table-scroll"><table class="data-table" id="eda-distributions-table"><thead></thead><tbody></tbody></table></div>
+      </div>
+      <div class="card" id="eda-distribution-plot-wrapper" style="display:none;">
+        <div class="card-title"><span id="eda-distribution-plot-title">Distribution plots</span><button class="btn btn-sm" id="btn-close-eda-plot">Close</button></div>
+        <div class="grid grid-2"><div id="eda-distribution-histogram"></div><div id="eda-distribution-box"></div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Categorical frequencies</div>
+        <div id="eda-categorical-charts" class="grid grid-2"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Correlation heatmap</div>
+        <div id="eda-correlation" class="chart-plot"></div>
+      </div>
+    </section>
+
+    <!-- ---------- INSIGHTS ---------- -->
+    <section class="screen" id="screen-insights">
+      <div class="screen-header">
+        <h1>Automatically detected insights</h1>
+        <p>Findings generated from the data itself. Correlation never implies causation.</p>
+      </div>
+      <div class="card"><div class="insight-list" id="insights-list"></div></div>
+    </section>
+
+    <!-- ---------- DASHBOARD ---------- -->
+    <section class="screen" id="screen-dashboard">
+      <div class="screen-header">
+        <h1>Interactive dashboard</h1>
+        <p>Generated dynamically from your dataset's detected schema — not hard-coded to any single dataset.</p>
+      </div>
+      <div class="dashboard-toolbar">
+        <div class="filter-rail" id="dashboard-filters"></div>
+        <button class="btn" id="btn-refresh-dashboard">Refresh</button><a class="btn btn-primary" id="btn-download-powerbi" href="#" title="Excel data for import into Power BI. Native PBIX generation is not supported.">Export for Power BI (.xlsx)</a>
+      </div>
+      <div class="kpi-strip" id="dashboard-kpis"></div>
+      <div class="chart-grid" id="dashboard-charts"></div>
+    </section>
+
+    <!-- ---------- SEGMENTATION ---------- -->
+    <section class="screen" id="screen-segmentation">
+      <div class="card"><div class="card-title">Optional RFM column mapping</div><div id="segmentation-mappings"></div><button class="btn" onclick="loadSegmentationScreen(true)">Apply mapping</button></div>
+      <div class="screen-header">
+        <h1>Customer segmentation</h1>
+        <p>RFM analysis and K-Means clustering, offered only when the dataset contains suitable customer, date and monetary fields.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">RFM segments</div>
+        <div class="chart-plot" id="rfm-donut-chart"></div><div id="rfm-content"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">K-Means clusters</div>
+        <div class="chart-plot" id="kmeans-cluster-chart" style="margin-bottom:16px;"></div><div id="kmeans-scatter-chart" class="chart-plot"></div><div id="kmeans-content"></div>
+      </div>
+    </section>
+
+    <!-- ---------- ASK YOUR DATA ---------- -->
+    <section class="screen" id="screen-ai">
+      <div class="screen-header">
+        <h1>Ask your data</h1>
+        <p>Optional Groq-powered natural-language layer. The application works fully without it.</p>
+      </div>
+      <div class="card">
+        <div class="field">
+          <label class="field-label">Table name (loaded in PostgreSQL)</label>
+          <input type="text" id="ai-table-name" placeholder="e.g. sales_sample"/>
+        </div>
+        <div class="field">
+          <label class="field-label">Your question</label>
+          <textarea id="ai-question" rows="3" placeholder="Show the top 10 products by revenue."></textarea>
+        </div>
+        <div class="btn-row"><button class="btn btn-primary" id="btn-ask-ai">Ask</button></div>
+      </div>
+      <div class="card" id="ai-answer-card" style="display:none;">
+        <div class="card-title">Answer</div>
+        <p id="ai-answer-text"></p>
+        <pre id="ai-answer-sql" class="mono small" style="white-space:pre-wrap;"></pre>
+      </div>
+    </section>
+
+    <!-- ---------- REPORTS ---------- -->
+    <section class="screen" id="screen-reports">
+      <div class="screen-header">
+        <h1>Reports and exports</h1>
+        <p>Download the cleaned dataset, or export the current analysis.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Export cleaned data</div><p class="small muted">Power BI-compatible export downloads Excel data. In Power BI Desktop, use Get Data - Excel workbook. Native PBIX files and prebuilt Power BI visuals are not generated.</p>
+        <div class="export-row">
+          <a class="btn btn-primary" id="export-csv-link" href="#" target="_blank">Download CSV</a>
+          <a class="btn" id="export-xlsx-link" href="#" target="_blank">Download XLSX</a>
+          <a class="btn" id="export-powerbi-link" href="#" style="background:#f59e0b;color:#111827;font-weight:600;">Export for Power BI (.xlsx)</a>
+          <a class="btn" id="export-pbids-link" href="#" target="_blank">Power BI Data Source (.pbids)</a>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Executive summary</div>
+        <div id="executive-summary-kpis" class="grid grid-3"></div>
+        <div id="executive-summary-insights" style="margin-top:14px;"></div>
+      </div>
+    </section>
+
+    <!-- ---------- SETTINGS ---------- -->
+    <section class="screen" id="screen-settings">
+      <div class="screen-header">
+        <h1>Settings</h1>
+        <p>Database and AI configuration live in your local <code class="inline-code">.env</code> file and are never sent to the browser.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Application status</div>
+        <table class="data-table">
+          <tbody>
+            <tr><td>API base URL</td><td class="mono" id="settings-api-base"></td></tr>
+            <tr><td>Application</td><td id="settings-app-status"></td></tr>
+            <tr><td>Database configured</td><td id="settings-db-status"></td></tr>
+            <tr><td>AI (Groq) enabled</td><td id="settings-ai-status"></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-title">Security reminders</div>
+        <ul class="small">
+          <li>Never paste passwords or API keys into frontend source code.</li>
+          <li>Keep <code class="inline-code">.env</code> out of Git — it is already listed in <code class="inline-code">.gitignore</code>.</li>
+          <li>The whole dataset is never sent to Groq — only aggregated context.</li>
+        </ul>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div class="toast-stack" id="toast-stack"></div>
+
+<script src="js/app.js"></script>
+<script src="js/upload.js"></script>
+<script src="js/profile.js"></script>
+<script src="js/cleaning.js"></script>
+<script src="js/database.js"></script>
+<script src="js/analytics.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/projects.js"></script>
+</body>
+</html>

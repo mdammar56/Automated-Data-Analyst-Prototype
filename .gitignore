@@ -1,0 +1,40 @@
+# Secrets / environment
+.env
+*.env
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Data & generated artifacts
+data/uploads/*
+!data/uploads/.gitkeep
+data/cleaned/*
+!data/cleaned/.gitkeep
+data/exports/*
+!data/exports/.gitkeep
+reports/*
+!reports/.gitkeep
+
+# Logs
+*.log
+logs/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Node (not used in v1, reserved for future frontend tooling)
+node_modules/
